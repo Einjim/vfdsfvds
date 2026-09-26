@@ -63,6 +63,7 @@ app = Flask(__name__)
 
 GEMINI_API_KEY = "AQ.Ab8RN6I6LkkfCv9deZA8O0yh0c7D99KVQciJ68Fv5Vra_fMINw"
 GEMINI_API_KEY = "AQ.Ab8RN6Loa_ybBHj6_ovrjoogsAq9N2wOauc7SLEV_Q_VjSbQjw"
+GEMINI_API_KEY = "AQ.Ab8RN6KwpP5s2m0pftG1uBsTAvaxrynS6XYqis7XM8FFBDVL3w"
 
 MODELS_TO_TRY = [
     "gemini-3.5-flash",       # First choice
