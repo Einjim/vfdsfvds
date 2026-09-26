@@ -63,8 +63,13 @@ app = Flask(__name__)
 
 GEMINI_API_KEY = "AQ.Ab8RN6I6LkkfCv9deZA8O0yh0c7D99KVQciJ68Fv5Vra_fMINw"
 GEMINI_API_KEY = "AQ.Ab8RN6Loa_ybBHj6_ovrjoogsAq9N2wOauc7SLEV_Q_VjSbQjw"
-GEMINI_MODEL = "gemini-3.5-flash"  # change here if you want e.g. gemini-3.6-flash
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
+
+MODELS_TO_TRY = [
+    "gemini-3.5-flash",       # First choice
+    "gemini-3.6-flash",       # Excellent backup
+    "gemini-3.5-flash-lite",  # Faster, lighter backup
+    "gemini-2.5-flash"        # Very reliable older fallback
+]
 
 FREE_ANALYSES_BASE = 1000
 REFERRALS_PER_BONUS_CREDIT = 5
@@ -497,30 +502,45 @@ def gemini_ask(system_prompt, image_bytes, mime_type, question, history):
     }
     headers = {"x-goog-api-key": GEMINI_API_KEY, "Content-Type": "application/json"}
 
-    try:
-        resp = requests.post(GEMINI_URL, headers=headers, json=body, timeout=55)
-    except requests.RequestException as e:
-        print("Gemini request failed:", e)
-        return "⚠️ Couldn't reach the AI service right now. Please try again in a moment."
+    error_logs = []
 
-    try:
-        data = resp.json()
-    except ValueError:
-        print("Gemini returned non-JSON:", resp.status_code, resp.text[:500])
-        return "⚠️ The AI service returned an unexpected response. Please try again."
+    for model in MODELS_TO_TRY:
+        gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+        
+        try:
+            resp = requests.post(gemini_url, headers=headers, json=body, timeout=55)
+        except requests.RequestException as e:
+            error_logs.append(f"[{model}] Request failed: {e}")
+            continue
 
-    if resp.status_code != 200:
-        print("Gemini error", resp.status_code, data)
-        return "⚠️ The AI service returned an error. Please try again in a moment."
+        try:
+            data = resp.json()
+        except ValueError:
+            error_logs.append(f"[{model}] Non-JSON response (HTTP {resp.status_code}): {resp.text[:100]}")
+            continue
 
-    candidates = data.get("candidates") or []
-    if not candidates:
-        reason = data.get("promptFeedback", {}).get("blockReason", "unknown")
-        return f"⚠️ The AI couldn't analyze this image (reason: {reason}). Try a clearer or different screenshot."
+        if resp.status_code != 200:
+            # truncate output to prevent message length errors in Telegram
+            error_logs.append(f"[{model}] Error {resp.status_code}: {str(data)[:300]}")
+            continue
 
-    text_parts = candidates[0].get("content", {}).get("parts", [])
-    text = "".join(p.get("text", "") for p in text_parts).strip()
-    return text or "⚠️ The AI didn't return any text for this image. Please try again."
+        candidates = data.get("candidates") or []
+        if not candidates:
+            reason = data.get("promptFeedback", {}).get("blockReason", "unknown")
+            return f"⚠️ The AI couldn't analyze this image (reason: {reason}). Try a clearer or different screenshot."
+
+        text_parts = candidates[0].get("content", {}).get("parts", [])
+        text = "".join(p.get("text", "") for p in text_parts).strip()
+        
+        if text:
+            return text
+        else:
+            error_logs.append(f"[{model}] AI returned empty text.")
+            continue
+
+    # If it falls through all the models, all of them have failed. Let's return the exact logs.
+    logs_str = "\n".join(error_logs)
+    return f"⚠️ All AI models failed (due to high demand or connection issues). Logs:\n\n{logs_str}"
 
 
 # ---------------------------------------------------------------------------
