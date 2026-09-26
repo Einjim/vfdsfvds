@@ -62,6 +62,7 @@ app = Flask(__name__)
 # ---------------------------------------------------------------------------
 
 GEMINI_API_KEY = "AQ.Ab8RN6I6LkkfCv9deZA8O0yh0c7D99KVQciJ68Fv5Vra_fMINw"
+GEMINI_API_KEY = "AQ.Ab8RN6Loa_ybBHj6_ovrjoogsAq9N2wOauc7SLEV_Q_VjSbQjw"
 GEMINI_MODEL = "gemini-3.5-flash"  # change here if you want e.g. gemini-3.6-flash
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 
