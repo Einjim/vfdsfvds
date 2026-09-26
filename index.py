@@ -66,7 +66,7 @@ GEMINI_API_KEY = "AQ.Ab8RN6Loa_ybBHj6_ovrjoogsAq9N2wOauc7SLEV_Q_VjSbQjw"
 GEMINI_MODEL = "gemini-3.5-flash"  # change here if you want e.g. gemini-3.6-flash
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 
-FREE_ANALYSES_BASE = 1
+FREE_ANALYSES_BASE = 1000
 REFERRALS_PER_BONUS_CREDIT = 5
 
 DEFAULT_SYSTEM_PROMPT = (
